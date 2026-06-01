@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>仮想国家ハマノランド - Ultimate v7.1</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <div id="startOverlay">
+    <div class="start-card">
+      <h2>ようこそハマノランドへ</h2>
+
+      <div class="start-text">
+        ここは命と経済の天秤が狂った仮想国家。<br />
+        あなたは政府の検問や未知の感染症をくぐり抜け、150マスの過酷な人生を生き抜かなければなりません。<br />
+        無事に抗体証明書（Green Pass）を手にし、最終防衛戦を越えられることを祈ります……。
+      </div>
+
+      <div class="small">人間プレイヤー人数</div>
+      <div id="playerBtns" class="playerBtns">
+        <button onclick="selectP(1)">1</button>
+        <button onclick="selectP(2)">2</button>
+        <button onclick="selectP(3)">3</button>
+        <button onclick="selectP(4)">4</button>
+        <button onclick="selectP(5)">5</button>
+      </div>
+
+      <div class="small">CPU人数</div>
+      <div id="cpuBtns" class="playerBtns">
+        <button onclick="selectCPU(0)">0</button>
+        <button onclick="selectCPU(1)">1</button>
+        <button onclick="selectCPU(2)">2</button>
+        <button onclick="selectCPU(3)">3</button>
+        <button onclick="selectCPU(4)">4</button>
+      </div>
+
+      <div id="totalPlayerPill" class="pill">Total: 4 / 5</div>
+
+      <button class="btnPrimary start-btn" id="btnStart" type="button">入国する</button>
+    </div>
+  </div>
+
+  <div class="header">
+    <div class="controls">
+      <div class="dice-ui">
+        <div class="scene">
+          <div class="dice-wrapper" id="diceWrapper">
+            <div class="dice3d" id="dice3d">
+              <div class="dice__face dice__face--front"></div>
+              <div class="dice__face dice__face--back"></div>
+              <div class="dice__face dice__face--right"></div>
+              <div class="dice__face dice__face--left"></div>
+              <div class="dice__face dice__face--top"></div>
+              <div class="dice__face dice__face--bottom"></div>
+            </div>
+            <div id="diceNumber" class="diceNumber3d">1</div>
+          </div>
+        </div>
+
+        <button id="btnRoll" type="button" disabled>サイコロ 🎲</button>
+      </div>
+    </div>
+
+    <div class="pills">
+      <span class="pill" id="roundPill">Round: 1</span>
+      <span class="pill" id="govPill">GovFund: 100,000</span>
+      <span class="pill" id="lvPill">World Lv: 1</span>
+      <span class="pill alert" id="ebolaPill" style="display:none;">🦇 エボラ</span>
+      <span class="pill alert" id="collapsePill" style="display:none;">🏥 医療崩壊</span>
+      <span class="pill good" id="phPill" style="display:none;">🌐 公衆衛生UP</span>
+      <span class="pill special" id="privatizePill" style="display:none;">⚖️ 医療民営化</span>
+    </div>
+  </div>
+
+
+  <div class="main-area">
+    <div class="board-container">
+      <div id="boardBox">
+        <div id="gridLayer"></div>
+        <div id="tokensLayer"></div>
+      </div>
+    </div>
+
+    <div class="side-area">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>名</th>
+              <th>Pos</th>
+              <th>Money</th>
+              <th>Ins</th>
+              <th>CP</th>
+              <th>未治</th>
+              <th>Pass</th>
+              <th>Items</th>
+            </tr>
+          </thead>
+          <tbody id="playerTbody"></tbody>
+        </table>
+      </div>
+
+      <div id="log">ここにゲームの進行が表示されます。</div>
+    </div>
+  </div>
+
+  <div id="modalBack">
+    <div class="modal">
+      <div id="modalTitle"></div>
+      <div id="modalBody"></div>
+      <div id="modalFoot"></div>
+    </div>
+  </div>
+
+  <div id="resultOverlay">
+    <div class="result-card">
+      <div id="resultTitle">パンデミック 最終評価</div>
+      <div id="resultBody">
+        <h3>👥 生存者リザルト</h3>
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>名</th>
+              <th>CP</th>
+              <th>投資</th>
+              <th>未治</th>
+              <th>TG</th>
+              <th>結果</th>
+            </tr>
+          </thead>
+          <tbody id="resultTbody"></tbody>
+        </table>
+
+        <h3>🦠 ハマノランド感染症図鑑</h3>
+        <div id="diseaseList"></div>
+      </div>
+
+      <div id="resultFoot">
+        <button class="btnPrimary" type="button" onclick="location.reload()">もう一度プレイ</button>
+      </div>
+    </div>
+  </div>
+
+<button id="logToggleBtn" type="button">📜 ログ</button>
+<button id="cardToggleBtn" type="button">🪪 診察券</button>
+<button id="cardCloseBtn" type="button">閉じる</button>
+<button id="logCloseBtn" type="button">閉じる</button>
+  <script src="./main.js"></script>
+</body>
+</html>
