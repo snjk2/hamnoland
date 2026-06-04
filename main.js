@@ -383,19 +383,30 @@ function setMsg(s) {
      UI: modal
   ========================= */
   function showModal(title, bodyHTML, buttons) {
-    if (!el.modalBack) return;
-    el.modalTitle.textContent = title;
-    el.modalBody.innerHTML = bodyHTML;
-    el.modalFoot.innerHTML = "";
-    for (const b of buttons) {
-      const btn = document.createElement("button");
-      btn.textContent = b.text;
-      btn.className = b.className || "";
-      btn.onclick = () => b.onClick && b.onClick();
-      el.modalFoot.appendChild(btn);
-    }
-    el.modalBack.style.display = "flex";
+  if (!el.modalBack) return;
+
+  el.modalTitle.textContent = title;
+  el.modalBody.innerHTML = bodyHTML;
+  el.modalFoot.innerHTML = "";
+
+  for (const b of buttons) {
+    const btn = document.createElement("button");
+
+    btn.textContent = b.text;
+    btn.className = b.className || "";
+
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      document.activeElement?.blur();
+
+      if (b.onClick) b.onClick();
+    });
+
+    el.modalFoot.appendChild(btn);
   }
+
+  el.modalBack.style.display = "flex";
+}
 
   function closeModal() {
     if (!el.modalBack) return;
@@ -978,6 +989,8 @@ let rabiesOccurred = false;
 let finalPhaseStarted = false;
 let rankSnapshotAt143 = null;
 
+let finalStoryShown = new Set();
+
 let phase2Active = false;
 let phase2Step = 143;
 
@@ -1022,7 +1035,7 @@ function syncPlayerSelectionButtons() {
     });
   }
 
-  const totalPill = document.getElementById("totalPlayerPill");
+  const totalPill = document.getElementById("totalText");
   if (totalPill) {
     totalPill.textContent = `Total: ${selectedHumans + selectedCPUs} / ${CONFIG.PLAYER_MAX}`;
   }
@@ -1190,22 +1203,25 @@ async function askPlayerNames() {
           text: "決定",
           className: "btnPrimary",
           onClick: () => {
-            for (const p of players) {
-              const input = document.getElementById(`nameInput_${p.id}`);
-              p.name = cleanPlayerName(input?.value, p.defaultName);
-            }
 
-            closeModal();
+  document.activeElement?.blur();
 
-            logLine(
-              "INIT",
-              `名前設定：${players.map((p) => `${p.defaultName}→${p.name}`).join(" / ")}`
-            );
+  for (const p of players) {
+    const input = document.getElementById(`nameInput_${p.id}`);
+    p.name = cleanPlayerName(input?.value, p.defaultName);
+  }
 
-            renderTable();
-            renderTurn();
-            resolve();
-          },
+  closeModal();
+
+  logLine(
+    "INIT",
+    `名前設定：${players.map((p) => `${p.defaultName}→${p.name}`).join(" / ")}`
+  );
+
+  renderTable();
+  renderTurn();
+  resolve();
+},
         },
       ]
     );
@@ -2360,6 +2376,374 @@ async function offerRabiesSpecialTreatment(p) {
     { 分類: "blue", 疾病候補: "回虫症（Ascaris infection）", アイテム効果: "なし", 内容: "環境活動の一環で汚染された土壌を調査中、回虫の卵に接触感染", 発生場所: "汚染" },
   ];
 
+const DISEASE_INFO = {
+  "水痘": {
+    type: "ウイルス感染症",
+    route: "空気感染・飛沫感染・接触感染",
+    vaccine: "あり",
+    note: "発熱後に全身へ水疱性発疹が出現する。成人や免疫不全患者では重症化しやすい。"
+  },
+  "麻しん": {
+    type: "ウイルス感染症",
+    route: "空気感染",
+    vaccine: "あり",
+    note: "感染力が非常に強い。発熱、咳、結膜炎、発疹が特徴。肺炎や脳炎を合併することがある。"
+  },
+  "風しん": {
+    type: "ウイルス感染症",
+    route: "飛沫感染",
+    vaccine: "あり",
+    note: "発熱、発疹、リンパ節腫脹が特徴。妊娠初期の感染では先天性風しん症候群に注意が必要。"
+  },
+  "黄熱": {
+    type: "ウイルス感染症",
+    route: "蚊媒介",
+    vaccine: "あり",
+    note: "発熱、黄疸、出血傾向を起こすことがある。熱帯地域で問題となる感染症。"
+  },
+  "痘そう": {
+    type: "ウイルス感染症",
+    route: "飛沫感染・接触感染",
+    vaccine: "あり",
+    note: "天然痘。発熱後に全身へ特徴的な発疹が出現する。現在は世界的に根絶されている。"
+  },
+"HIV（後天性免疫不全症候群）": {
+  type: "ウイルス感染症",
+  route: "性的接触・血液感染・母子感染",
+  vaccine: "なし",
+  note: "HIVは免疫を担う細胞に感染する。未治療では免疫不全が進行し、日和見感染症などを起こしやすくなる。抗HIV療法により進行を抑えられる。"
+},
+"結核": {
+  type: "細菌感染症",
+  route: "空気感染",
+  vaccine: "あり",
+  note: "結核菌による感染症。長引く咳、発熱、寝汗、体重減少が特徴。公衆衛生上重要で、治療には複数の抗菌薬を長期間使用する。"
+},
+
+"コレラ": {
+  type: "細菌感染症",
+  route: "水系感染・経口感染",
+  vaccine: "あり",
+  note: "汚染された水や食品から感染する。激しい水様性下痢により急速な脱水を起こすことがあり、補液が重要。"
+},
+
+"マラリア": {
+  type: "原虫感染症",
+  route: "蚊媒介",
+  vaccine: "一部あり",
+  note: "ハマダラカが媒介する。発熱発作、悪寒、貧血などを起こす。熱帯地域で重要な感染症。"
+},
+
+"狂犬病": {
+  type: "ウイルス感染症",
+  route: "動物咬傷",
+  vaccine: "あり",
+  note: "感染動物に咬まれることで感染する。発症後は極めて致死的で、曝露後ワクチン接種が重要。"
+},
+"インフルエンザ": {
+  type: "ウイルス感染症",
+  route: "飛沫感染・接触感染",
+  vaccine: "あり",
+  note: "発熱、咳、筋肉痛などを起こす。高齢者や基礎疾患を持つ人では重症化することがある。"
+},
+
+"COVID-19": {
+  type: "ウイルス感染症",
+  route: "飛沫感染・エアロゾル感染・接触感染",
+  vaccine: "あり",
+  note: "新型コロナウイルスによる感染症。発熱や咳のほか、肺炎や味覚・嗅覚障害を起こすことがある。"
+},
+
+"百日咳": {
+  type: "細菌感染症",
+  route: "飛沫感染",
+  vaccine: "あり",
+  note: "激しい連続した咳発作が特徴。乳児では重症化しやすい。"
+},
+
+"流行性耳下腺炎": {
+  type: "ウイルス感染症",
+  route: "飛沫感染・接触感染",
+  vaccine: "あり",
+  note: "おたふく風邪。耳下腺の腫脹が特徴で、髄膜炎や難聴を合併することがある。"
+},
+
+"手足口病": {
+  type: "ウイルス感染症",
+  route: "飛沫感染・接触感染・経口感染",
+  vaccine: "なし",
+  note: "手足や口腔内に水疱性発疹が出現する。乳幼児に多い感染症。"
+},
+
+"感染性胃腸炎": {
+  type: "ウイルス感染症",
+  route: "経口感染・接触感染",
+  vaccine: "なし",
+  note: "嘔吐や下痢を起こす感染症。ノロウイルスなどが代表的。"
+},
+
+"A型肝炎": {
+  type: "ウイルス感染症",
+  route: "経口感染",
+  vaccine: "あり",
+  note: "汚染された食品や水から感染する。発熱や黄疸を伴う急性肝炎を起こす。"
+},
+
+"ウイルス性肝炎( B型)": {
+  type: "ウイルス感染症",
+  route: "血液感染・性的接触・母子感染",
+  vaccine: "あり",
+  note: "慢性化すると肝硬変や肝がんの原因となる。ワクチンで予防可能。"
+},
+
+"肺炎球菌": {
+  type: "細菌感染症",
+  route: "飛沫感染",
+  vaccine: "あり",
+  note: "肺炎、中耳炎、髄膜炎などを引き起こす。乳幼児や高齢者で重要な病原体。"
+},
+
+"マイコプラズマ肺炎": {
+  type: "細菌感染症",
+  route: "飛沫感染",
+  vaccine: "なし",
+  note: "若年者に多く、乾いた咳が長引くことが特徴。"
+},
+"ポリオ": {
+  type: "ウイルス感染症",
+  route: "経口感染",
+  vaccine: "あり",
+  note: "ポリオウイルスによる感染症。まれに手足の麻痺を起こす。"
+},
+
+"トキソプラズマ症（Toxoplasmosis）": {
+  type: "原虫感染症",
+  route: "経口感染・先天性感染",
+  vaccine: "なし",
+  note: "加熱不十分な肉や猫の糞便を介して感染する。妊娠中の初感染では胎児への影響に注意。"
+},
+
+"エキノコックス症": {
+  type: "寄生虫感染症",
+  route: "経口感染",
+  vaccine: "なし",
+  note: "キツネやイヌの糞便中の虫卵を介して感染する。肝臓に病変を形成することが多い。"
+},
+
+"デング熱": {
+  type: "ウイルス感染症",
+  route: "蚊媒介",
+  vaccine: "一部あり",
+  note: "蚊によって媒介される。高熱、関節痛、発疹が特徴。"
+},
+
+"日本紅斑熱（リケッチア）": {
+  type: "細菌感染症",
+  route: "ダニ媒介",
+  vaccine: "なし",
+  note: "マダニに刺されて感染する。発熱、発疹、刺し口が特徴。"
+},
+
+"流行性角結膜炎（流行り目）": {
+  type: "ウイルス感染症",
+  route: "接触感染",
+  vaccine: "なし",
+  note: "アデノウイルスによる結膜炎。強い充血や涙、目やにを伴う。"
+},
+
+"アニサキス": {
+  type: "寄生虫感染症",
+  route: "経口感染",
+  vaccine: "なし",
+  note: "生魚に寄生する幼虫を摂取して感染する。激しい腹痛を起こす。"
+},
+
+"回虫症（Ascaris infection）": {
+  type: "寄生虫感染症",
+  route: "経口感染",
+  vaccine: "なし",
+  note: "虫卵を摂取することで感染する。多くは無症状だが、腹痛や腸閉塞の原因になることがある。"
+},
+"ジフテリア": {
+  type: "細菌感染症",
+  route: "飛沫感染",
+  vaccine: "あり",
+  note: "咽頭に偽膜を形成し、重症例では気道閉塞を起こす。"
+},
+
+"SARS": {
+  type: "ウイルス感染症",
+  route: "飛沫感染・接触感染",
+  vaccine: "なし",
+  note: "SARSコロナウイルスによる重症肺炎。2003年に世界的流行を起こした。"
+},
+
+"腸管出血性大腸菌感染症": {
+  type: "細菌感染症",
+  route: "経口感染",
+  vaccine: "なし",
+  note: "O157などが代表。血便や溶血性尿毒症症候群(HUS)を起こすことがある。"
+},
+
+"細菌性赤痢": {
+  type: "細菌感染症",
+  route: "経口感染",
+  vaccine: "なし",
+  note: "高熱、腹痛、血便を伴う感染症。少量の菌でも感染する。"
+},
+
+"腸チフス": {
+  type: "細菌感染症",
+  route: "経口感染",
+  vaccine: "あり",
+  note: "サルモネラ・チフィによる感染症。高熱とバラ疹が特徴。"
+},
+
+"日本脳炎": {
+  type: "ウイルス感染症",
+  route: "蚊媒介",
+  vaccine: "あり",
+  note: "蚊を介して感染する脳炎。意識障害やけいれんを起こすことがある。"
+},
+
+"エムポックス（Mpox / 旧称サル痘）": {
+  type: "ウイルス感染症",
+  route: "接触感染・飛沫感染",
+  vaccine: "あり",
+  note: "発熱とリンパ節腫脹に続いて特徴的な発疹が出現する。"
+},
+
+"レジオネラ症": {
+  type: "細菌感染症",
+  route: "エアロゾル感染",
+  vaccine: "なし",
+  note: "人工水環境から発生する飛沫を吸入して感染する。重症肺炎の原因となる。"
+},
+
+"アメーバ赤痢": {
+  type: "原虫感染症",
+  route: "経口感染",
+  vaccine: "なし",
+  note: "血液や粘液を含む下痢を起こす。肝膿瘍を合併することもある。"
+},
+
+"破傷風": {
+  type: "細菌感染症",
+  route: "創傷感染",
+  vaccine: "あり",
+  note: "土壌中の菌が傷口から侵入する。筋肉のけいれんや開口障害を起こす。"
+},
+"細菌性髄膜炎菌": {
+  type: "細菌感染症",
+  route: "飛沫感染",
+  vaccine: "あり",
+  note: "髄膜炎菌による感染症。急速に進行し、髄膜炎や敗血症を起こすことがある。"
+},
+
+"梅毒": {
+  type: "細菌感染症",
+  route: "性的接触・母子感染",
+  vaccine: "なし",
+  note: "梅毒トレポネーマによる感染症。進行すると神経や心血管にも障害を起こす。"
+},
+
+"住血吸虫症": {
+  type: "寄生虫感染症",
+  route: "経皮感染",
+  vaccine: "なし",
+  note: "淡水中の幼虫が皮膚から侵入して感染する。慢性化すると肝障害などを起こす。"
+},
+
+"シャーガス": {
+  type: "寄生虫感染症",
+  route: "昆虫媒介",
+  vaccine: "なし",
+  note: "サシガメが媒介する。慢性期には心筋症や消化管障害を引き起こす。"
+},
+
+"アフリカトリパノソーマ": {
+  type: "寄生虫感染症",
+  route: "昆虫媒介",
+  vaccine: "なし",
+  note: "ツェツェバエが媒介する。進行すると睡眠障害や意識障害を起こす。"
+},
+
+"フィラリア症": {
+  type: "寄生虫感染症",
+  route: "蚊媒介",
+  vaccine: "なし",
+  note: "蚊を介して感染し、慢性化するとリンパ浮腫や象皮病を引き起こす。"
+},
+"エボラ出血熱": {
+  type: "ウイルス感染症",
+  route: "接触感染",
+  vaccine: "あり",
+  note: "高熱、嘔吐、下痢、出血傾向を伴う重篤な感染症。致死率が高い。"
+},
+
+"クリミア・コンゴ出血熱": {
+  type: "ウイルス感染症",
+  route: "ダニ媒介・接触感染",
+  vaccine: "なし",
+  note: "マダニを介して感染する出血熱。重症例では多臓器不全を起こす。"
+},
+
+"南米出血熱": {
+  type: "ウイルス感染症",
+  route: "げっ歯類媒介",
+  vaccine: "一部あり",
+  note: "野生げっ歯類との接触で感染する。高熱や出血症状を起こす。"
+},
+
+"ペスト": {
+  type: "細菌感染症",
+  route: "ノミ媒介・飛沫感染",
+  vaccine: "なし",
+  note: "ペスト菌による感染症。肺ペストでは人から人へ飛沫感染する。"
+},
+
+"マールブルグ病": {
+  type: "ウイルス感染症",
+  route: "接触感染",
+  vaccine: "なし",
+  note: "エボラと同じフィロウイルス科。重度の出血熱を引き起こす。"
+},
+
+"ラッサ熱": {
+  type: "ウイルス感染症",
+  route: "げっ歯類媒介・接触感染",
+  vaccine: "なし",
+  note: "ネズミの排泄物を介して感染する。西アフリカで流行する出血熱。"
+},
+"MERS（中東呼吸器症候群）": {
+  type: "ウイルス感染症",
+  route: "飛沫感染・接触感染・動物媒介",
+  vaccine: "なし",
+  note: "MERSコロナウイルスによる感染症。ヒトコブラクダが感染源とされ、重症肺炎を起こすことがある。"
+},
+
+"重症熱性血小板減少症候群（SFTS）": {
+  type: "ウイルス感染症",
+  route: "ダニ媒介",
+  vaccine: "なし",
+  note: "マダニによって媒介される。高熱、嘔吐、血小板減少を起こし、重症化することがある。"
+},
+
+"劇症型溶血性レンサ球菌感染症": {
+  type: "細菌感染症",
+  route: "接触感染・創傷感染",
+  vaccine: "なし",
+  note: "A群溶血性レンサ球菌による重篤な感染症。急速に軟部組織壊死や敗血症を引き起こす。"
+},
+
+"クリプトコックス症": {
+  type: "真菌感染症",
+  route: "空気感染（胞子吸入）",
+  vaccine: "なし",
+  note: "鳩などの排泄物中に存在する真菌を吸入して感染する。免疫不全患者では髄膜炎を起こすことがある。"
+}
+};
+
   function normalizeColor(cls) {
     const c = String(cls ?? "").toLowerCase().trim();
     if (c === "red" || c === "yellow" || c === "blue") return c;
@@ -2959,7 +3343,6 @@ if (p.vaccinated && p.vaccinatedSet.has(disease)) {
   p.infectLanded = Math.max(0, (p.infectLanded || 0) - 1);
 
   recordDiseaseEncounter(disease, "ワクチンで回避");
-  grantGreenPassBase(p, disease, "ワクチン無効化");
 
   logLine("VAX", `${p.name}: ワクチンで ${disease} を防いだ`);
     await showOkPopup(
@@ -3994,6 +4377,90 @@ async function resolveGreenPass100(p) {
     return arr.map((p) => p.id);
   }
 
+async function showFinalStoryOnce(step) {
+  if (finalStoryShown.has(step)) return;
+  finalStoryShown.add(step);
+
+  const stories = {
+    143: {
+      title: "143：未知の感染症発生",
+      lines: [
+        "世界各地で原因不明の肺炎患者が報告され始めた。",
+        "SNSでは様々な噂が飛び交い、社会に不穏な空気が広がっている。",
+        "まだ多くの人は、この異変の大きさに気づいていない。"
+      ],
+      tone: "yellow"
+    },
+
+    144: {
+      title: "144：感染爆発・ロックダウン",
+      lines: [
+        "未知の感染症は急速に拡大した。",
+        "都市は封鎖され、人々は外出を控えるよう求められる。",
+        "経済活動は停止し、社会全体に大きな影響が及ぶ。"
+      ],
+      tone: "yellow"
+    },
+
+    145: {
+      title: "145：Zetaウイルス最終防衛戦",
+      lines: [
+        "未知の病原体は『Zetaウイルス』と命名された。",
+        "これまでに集めたGreen Passとアイテムを使い、感染拡大を食い止める。",
+        "防衛に失敗すると大きな代償を払うことになる。"
+      ],
+      tone: "blue"
+    },
+
+    146: {
+      title: "146：緊急承認",
+      lines: [
+        "新たなワクチンと治療薬が異例の速さで完成した。",
+        "まだ未知の部分も残るが、人類は希望を託す。",
+        "治験に参加するかどうか、その決断が求められる。"
+      ],
+      tone: "yellow"
+    },
+
+    147: {
+      title: "147：インフォデミック",
+      lines: [
+        "感染症だけでなく、情報もまた社会を混乱させている。",
+        "SNSには真実とデマが入り乱れ、人々は何を信じるべきか分からなくなる。"
+      ],
+      tone: "yellow"
+    },
+
+    148: {
+      title: "148：社会からの評価",
+      lines: [
+        "パンデミックの中で積み重ねた行動が評価される。",
+        "あなたは社会にどんな影響を残したのだろうか。"
+      ],
+      tone: "blue"
+    },
+
+    149: {
+      title: "149：最終判定",
+      lines: [
+        "パンデミックは終息へ向かっている。",
+        "これまでの全ての選択がTGとなり、運命を決定する。"
+      ],
+      tone: "red"
+    }
+  };
+
+  const s = stories[step];
+  if (!s) return;
+
+  await showOkPopup(
+    s.title,
+    s.lines,
+    "event",
+    s.tone
+  );
+}
+
 async function snapshotRankAt143() {
   const order = getRankOrderByMoneyThenCP();
   rankSnapshotAt143 = { order };
@@ -4039,24 +4506,16 @@ async function startFinalPhaseAt143() {
     "FINAL",
     "143到達：フェーズ2開始（通常サイコロ停止 / 生存者は143に集合）"
   );
+await showFinalStoryOnce(143);
 
   if (!rankSnapshotAt143) {
     await snapshotRankAt143();
   }
-
-  await showOkPopup(
-    "フェーズ2開始",
-    [
-      "ここから通常サイコロを停止します。",
-      "以後、生存者全員が1マスずつ一斉進行します。",
-      "144〜149の固定イベントを順番に処理します。",
-    ],
-    "event",
-    "yellow"
-  );
 }
 
 async function resolveLockdown144(p) {
+  await showFinalStoryOnce(144);
+
   const pct = RULE_V71.LOCKDOWN_RATE;
   const loss = Math.floor(p.money * pct);
 
@@ -4087,6 +4546,8 @@ async function resolveLockdown144(p) {
 }
 
 async function resolveCollapse145(p) {
+  await showFinalStoryOnce(145);
+
   if (!p.alive) return;
 
   const itemCount = countHeldItems(p);
@@ -4149,6 +4610,8 @@ async function resolveCollapse145(p) {
 }
  
 async function resolveTrial146(p) {
+  await showFinalStoryOnce(146);
+
   if (!p.alive) return;
 
   logLine("146", `${p.name}: 治験 - 同調圧力`);
@@ -4467,6 +4930,8 @@ if (p.isCPU) {
 }
 
 async function resolveChaos147(p) {
+  await showFinalStoryOnce(147);
+
   const order = getRankOrderByMoneyThenCP();
   const rank = order.indexOf(p.id) + 1;
 
@@ -4659,7 +5124,9 @@ async function resolveChaos147(p) {
   }
 
   async function resolveSocialEval148() {
-    if (socialEvalTriggered) return;
+  await showFinalStoryOnce(148);
+
+  if (socialEvalTriggered) return;
     if (!shouldTriggerSocialEval148()) return;
 
     const alive = getAlivePlayersForSocialEval();
@@ -4788,7 +5255,8 @@ function calcTG(p) {
     }
 
     pandemicResolved = true;
-    logLine("149", "全員集合 → TG判定開始（ダイスなし）");
+await showFinalStoryOnce(149);
+logLine("149", "全員集合 → TG判定開始（ダイスなし）");
 
     const T = CONFIG.TG_FINAL;
 
@@ -4873,6 +5341,22 @@ logLine(
     renderTokens();
     renderTable();
     renderTurn();
+
+   await showOkPopup(
+  "150：PANDEMIC OVER",
+  [
+    "未知の感染症との戦いは終わった。",
+    "",
+    "だが、",
+    "医療、経済、自由──",
+    "その全てを守ることはできなかった。",
+    "",
+    "あなたは、",
+    "この時代をどう生き抜いただろうか。"
+  ],
+  "pandemic",
+  "blue"
+);
 
     showResult();
 
@@ -4990,34 +5474,63 @@ if (p.pos === 100) {
   /* =========================
      Result display
   ========================= */
-function renderDiseaseDex() {
-  if (!el.diseaseList) return;
+function renderDiseaseDex(targetId = "ruleDiseaseList") {
+  const target = document.getElementById(targetId);
+  if (!target) return;
 
-  const names = Array.from(encounteredDiseases).sort();
+  const found = Array.from(encounteredDiseases || []).sort();
 
-  if (!names.length) {
-    el.diseaseList.innerHTML = `
-      <div class="small">今回記録された感染症はありません。</div>
+  if (!found.length) {
+    target.innerHTML = `
+      <div class="dexEmpty">
+        まだ感染症に遭遇していません。
+      </div>
     `;
     return;
   }
 
-  el.diseaseList.innerHTML = names
-    .map((name) => {
-      const d = diseaseByName(name);
-      const cls = normalizeColor(d?.分類 || "blue");
-      const place = d?.発生場所 || "不明";
-      const item = d?.アイテム効果 || "なし";
+  target.innerHTML = found.map(name => {
+    const info = DISEASE_INFO[name];
+    const gameData = DISEASES.find(d => d.疾病候補 === name);
+    const isResultDex = targetId === "diseaseList";
 
+    if (!info) {
       return `
-        <div class="popLine">
-          <b>${name}</b>
-          <span class="tag ${cls}">${cls}</span>
-          <span class="small">発生場所：${place} / 有効アイテム：${item}</span>
+        <div class="dexCard">
+          <div class="dexName">🦠 ${name}</div>
+          <div class="dexRow">医学情報：準備中</div>
+          ${
+            isResultDex && gameData
+              ? `
+                <div class="dexRow">発生場所：${gameData.発生場所}</div>
+                <div class="dexRow">有効アイテム：${gameData.アイテム効果}</div>
+              `
+              : ""
+          }
         </div>
       `;
-    })
-    .join("");
+    }
+
+    return `
+      <div class="dexCard">
+        <div class="dexName">🦠 ${name}</div>
+        <div class="dexRow">分類：${info.type}</div>
+        <div class="dexRow">感染経路：${info.route}</div>
+        <div class="dexRow">ワクチン：${info.vaccine}</div>
+
+        ${
+          isResultDex && gameData
+            ? `
+              <div class="dexRow">発生場所：${gameData.発生場所}</div>
+              <div class="dexRow">有効アイテム：${gameData.アイテム効果}</div>
+            `
+            : ""
+        }
+
+        <div class="dexNote">${info.note}</div>
+      </div>
+    `;
+  }).join("");
 }
 
 function showResult() {
@@ -5056,7 +5569,7 @@ function showResult() {
     el.resultOverlay.style.display = "flex";
   }
 
-renderDiseaseDex();
+renderDiseaseDex("diseaseList");
 
   logLine(
     "RESULT",
@@ -5693,6 +6206,8 @@ function hardReset() {
   phase2Active = false;
   phase2Step = 143;
 
+  finalStoryShown = new Set();
+
   ebolaTriggered = false;
   ebolaRemainTurns = 0;
   ebolaOccurred = false;
@@ -5789,6 +6304,12 @@ await askVaccinePack();
 
 document.body.classList.add("gameStarted");
 
+const ruleBtn = document.getElementById("ruleBookBtn");
+
+if (ruleBtn) {
+  ruleBtn.style.display = "block";
+}
+
   setMsg("サイコロを振って開始！");
   if (el.btnRoll) el.btnRoll.disabled = false;
   if (el.btnStart) el.btnStart.disabled = true;
@@ -5830,7 +6351,52 @@ function bindUI() {
   });
 }
 
+let tutorialStepIndex = 0;
 
+function showTutorialStep(index) {
+  const steps = Array.from(document.querySelectorAll(".tutorialStep"));
+  if (!steps.length) return;
+
+  tutorialStepIndex = Math.max(0, Math.min(index, steps.length - 1));
+
+  steps.forEach((step, i) => {
+    step.classList.toggle("active", i === tutorialStepIndex);
+  });
+
+  const backBtn = document.getElementById("tutorialBackBtn");
+  const nextBtn = document.getElementById("tutorialNextBtn");
+
+  if (backBtn) {
+    backBtn.style.visibility = tutorialStepIndex === 0 ? "hidden" : "visible";
+  }
+
+  if (nextBtn) {
+    nextBtn.style.display =
+      tutorialStepIndex === steps.length - 1 ? "none" : "block";
+    nextBtn.textContent = "次へ";
+  }
+}
+
+function bindTutorialUI() {
+  const backBtn = document.getElementById("tutorialBackBtn");
+  const nextBtn = document.getElementById("tutorialNextBtn");
+
+  if (backBtn) {
+    backBtn.onclick = () => {
+      showTutorialStep(tutorialStepIndex - 1);
+    };
+  }
+
+  if (nextBtn) {
+    nextBtn.onclick = () => {
+      showTutorialStep(tutorialStepIndex + 1);
+    };
+  }
+
+  showTutorialStep(0);
+}
+
+document.addEventListener("DOMContentLoaded", bindTutorialUI);
 
 /* =========================
    Hotfix CSS injection
@@ -7168,6 +7734,28 @@ document.addEventListener("click", (e) => {
 
   if (e.target.closest("#logCloseBtn")) {
     document.body.classList.remove("logOpen");
+  }
+});
+
+window.addEventListener("click", function(e) {
+  if (e.target.closest("#ruleBookBtn")) {
+    const modal = document.getElementById("ruleBookModal");
+
+    if (!modal) {
+      console.warn("ruleBookModal が見つからない");
+      return;
+    }
+
+    if (typeof renderDiseaseDex === "function") {
+      renderDiseaseDex("ruleDiseaseList");
+    }
+
+    modal.classList.remove("hidden");
+  }
+
+  if (e.target.closest("#ruleBookCloseBtn")) {
+    const modal = document.getElementById("ruleBookModal");
+    if (modal) modal.classList.add("hidden");
   }
 });
 
