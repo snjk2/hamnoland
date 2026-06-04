@@ -8,39 +8,84 @@
 </head>
 
 <body>
+<button
+  id="ruleBookBtn"
+  class="ruleBookBtn"
+  type="button"
+  style="display:none;"
+>
+📖 ルール
+</button>
   <div id="startOverlay">
     <div class="start-card">
-      <h2>ようこそハマノランドへ</h2>
+  <div class="tutorialStep active" id="tutorialStep1">
+    <h1 class="gameTitle">🦠 Infectious LiFE</h1>
+    <div class="gameSub">Hamanoland Edition</div>
 
-      <div class="start-text">
-        ここは命と経済の天秤が狂った仮想国家。<br />
-        あなたは政府の検問や未知の感染症をくぐり抜け、150マスの過酷な人生を生き抜かなければなりません。<br />
-        無事に抗体証明書（Green Pass）を手にし、最終防衛戦を越えられることを祈ります……。
-      </div>
+    <div class="welcomeBox">ようこそハマノランドへ！</div>
 
-      <div class="small">人間プレイヤー人数</div>
-      <div id="playerBtns" class="playerBtns">
-        <button onclick="selectP(1)">1</button>
-        <button onclick="selectP(2)">2</button>
-        <button onclick="selectP(3)">3</button>
-        <button onclick="selectP(4)">4</button>
-        <button onclick="selectP(5)">5</button>
-      </div>
+    <p>
+      ここは感染症、医療制度、政府資金、公衆衛生が複雑に絡み合う仮想国家。
+    </p>
+    <p>
+      あなたは150マスの社会を進みながら、命と経済のバランスを考えて生き残ります。
+    </p>
+  </div>
 
-      <div class="small">CPU人数</div>
-      <div id="cpuBtns" class="playerBtns">
-        <button onclick="selectCPU(0)">0</button>
-        <button onclick="selectCPU(1)">1</button>
-        <button onclick="selectCPU(2)">2</button>
-        <button onclick="selectCPU(3)">3</button>
-        <button onclick="selectCPU(4)">4</button>
-      </div>
+  <div class="tutorialStep" id="tutorialStep2">
+    <h2>🎲 基本ルール</h2>
 
-      <div id="totalPlayerPill" class="pill">Total: 4 / 5</div>
+    <div class="ruleCard">🎲 サイコロを振ってマスを進む</div>
+    <div class="ruleCard">🦠 感染マスでは病気にかかることがある</div>
+    <div class="ruleCard">🎁 アイテム・保険・ワクチンでリスクを下げる</div>
+    <div class="ruleCard">🏛 政府資金が減りすぎると社会が不安定になる</div>
+  </div>
 
-      <button class="btnPrimary start-btn" id="btnStart" type="button">入国する</button>
+  <div class="tutorialStep" id="tutorialStep3">
+    <h2>🎯 目的</h2>
+
+    <div class="ruleCard">✅ 終盤まで生き残る</div>
+    <div class="ruleCard">🧠 未治療を増やしすぎない</div>
+    <div class="ruleCard">🌍 公衆衛生レベルを保つ</div>
+    <div class="ruleCard">🟩 Green Passを獲得して最終防衛戦に備える</div>
+
+    <div class="ruleMini">
+      🦠 感染　🎁 アイテム　💼 仕事　🏛 政府　⭐ イベント
     </div>
   </div>
+
+  <div class="tutorialStep" id="tutorialStep4">
+    <h2>入国設定</h2>
+
+    <div class="small">人間プレイヤー人数</div>
+    <div id="playerBtns" class="playerBtns">
+      <button onclick="selectP(1)">1</button>
+      <button onclick="selectP(2)">2</button>
+      <button onclick="selectP(3)">3</button>
+      <button onclick="selectP(4)">4</button>
+      <button onclick="selectP(5)">5</button>
+    </div>
+
+    <div class="small">CPU人数</div>
+    <div id="cpuBtns" class="playerBtns">
+      <button onclick="selectCPU(0)">0</button>
+      <button onclick="selectCPU(1)">1</button>
+      <button onclick="selectCPU(2)">2</button>
+      <button onclick="selectCPU(3)">3</button>
+      <button onclick="selectCPU(4)">4</button>
+    </div>
+
+    <div id="totalText" class="totalText">Total: 4 / 5</div>
+
+  <button id="btnStart" class="btnPrimary">入国する</button>
+  </div>
+
+  <div class="tutorialNav">
+    <button id="tutorialBackBtn" type="button" onclick="tutorialPrev()">戻る</button>
+<button id="tutorialNextBtn" type="button" onclick="tutorialNext()">次へ</button>
+  </div>
+</div>
+</div> 
 
   <div class="header">
     <div class="controls">
@@ -147,6 +192,137 @@
 <button id="cardToggleBtn" type="button">🪪 診察券</button>
 <button id="cardCloseBtn" type="button">閉じる</button>
 <button id="logCloseBtn" type="button">閉じる</button>
+<div id="ruleBookModal" class="ruleBookModal hidden">
+  <div class="ruleBookCard">
+    <button id="ruleBookCloseBtn" class="ruleBookCloseBtn">×</button>
+
+    <h2>📖 Infectious LiFE ガイド</h2>
+
+<section>
+  <h3>🎯 目的</h3>
+  <p>
+    150マスの社会を進み、感染症・医療費・政府資金・公衆衛生のバランスを取りながら終盤まで生き残る。
+  </p>
+</section>
+
+<section>
+  <h3>🎲 基本</h3>
+  <ul>
+    <li>サイコロで移動</li>
+    <li>STOPマスは通過しても必ず停止</li>
+    <li>感染・仕事・政府・アイテム・イベントマスがある</li>
+    <li>最大プレイヤー数：5人</li>
+  </ul>
+</section>
+
+<section>
+  <h3>🦠 感染と未治療</h3>
+  <ul>
+    <li>感染すると治療費が発生</li>
+    <li>治療しないと「未治療」が増える</li>
+    <li>未治療が増えると終盤評価に悪影響</li>
+    <li>危険度2以上の感染が連続するとエボラ条件に関係</li>
+  </ul>
+</section>
+
+<section>
+  <h3>💉 ワクチン</h3>
+  <ul>
+    <li>対象疾患の感染を100%回避</li>
+    <li>ワクチンで防いだ場合、Green Pass権利は得られない</li>
+  </ul>
+</section>
+
+<section>
+  <h3>🟩 Green Pass</h3>
+  <p>対象感染症から自然回復した場合に権利を獲得。100マス目で正式取得。</p>
+  <ul>
+    <li>対象：痘そう、黄熱、B型肝炎</li>
+    <li>流行性耳下腺炎、麻しん、風しん、水痘</li>
+    <li>正規取得費：ルール内設定額</li>
+  </ul>
+</section>
+
+<section>
+  <h3>🌍 World Lv</h3>
+  <ul>
+    <li>公衆衛生レベル</li>
+    <li>投資で上昇</li>
+    <li>Lv1以上で感染危険度が下がる</li>
+    <li>高いほど社会全体が感染に強くなる</li>
+  </ul>
+</section>
+
+<section>
+  <h3>🏛 GovFund</h3>
+  <ul>
+    <li>政府資金</li>
+    <li>医療政策・補助・イベントで増減</li>
+    <li>80,000未満でエボラ発生条件の一部</li>
+    <li>減りすぎると社会危機が起きやすい</li>
+  </ul>
+</section>
+
+<section>
+  <h3>🏥 保険</h3>
+  <ul>
+    <li>A：無保険</li>
+    <li>B：一部負担</li>
+    <li>C：全額カバー寄り</li>
+    <li>保険が良いほど治療時の自己負担が軽くなる</li>
+  </ul>
+</section>
+
+<section>
+  <h3>🧠 CP</h3>
+  <ul>
+    <li>市民協力度</li>
+    <li>高いほど終盤評価に有利</li>
+    <li>低いと社会評価が悪化しやすい</li>
+  </ul>
+</section>
+
+<section>
+  <h3>⚠️ 特殊イベント</h3>
+  <ul>
+    <li>エボラ：GovFund低下、または高危険度感染の連続で発生</li>
+    <li>発生中：感染危険度 +1</li>
+    <li>医療崩壊：治療・アイテム成功率に悪影響</li>
+    <li>医療民営化：医療費負担が重くなる</li>
+  </ul>
+</section>
+
+<section>
+  <h3>🗺 マスの種類</h3>
+  <ul>
+    <li>🦠 感染：感染症イベント</li>
+    <li>🎁 アイテム：予防・治療補助</li>
+    <li>💼 仕事：収入獲得</li>
+    <li>🏛 政府：政策・投資</li>
+    <li>⭐ イベント：社会変化</li>
+    <li>🛑 STOP：必ず停止</li>
+  </ul>
+</section>
+
+<section>
+  <h3>🏁 終盤評価</h3>
+  <p>
+    生存状況、未治療数、CP、Green Pass、GovFund、World Lvなどをもとに最終評価が決まる。
+  </p>
+</section>
+
+<section>
+  <h3>🦠 遭遇した感染症</h3>
+  <p>
+    ゲーム中に遭遇した感染症だけが表示されます。
+    医学的な分類・感染経路・ワクチン情報を確認できます。
+  </p>
+
+  <div id="ruleDiseaseList"></div>
+</section>
+  </div>
+</div>
   <script src="./main.js"></script>
+
 </body>
 </html>
