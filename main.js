@@ -3116,6 +3116,7 @@ async function resolveTbCluster(sourcePlayer, sev) {
   const targets = players
   .filter((p) => {
     if (!p.alive) return false;
+    if (p.id === sourcePlayer.id) return false;
     return Math.abs(p.pos - sourcePlayer.pos) <= RULE_V71.TB_RANGE;
   })
   .sort((a, b) => {
