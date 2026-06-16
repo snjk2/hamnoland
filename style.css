@@ -2136,8 +2136,7 @@ body{
   pointer-events:auto !important;
 }
 
-/*
-.playerCard,
+/*.playerCard,
 .player-card,
 .statusCard,
 .status-card{
@@ -2146,3 +2145,34 @@ body{
   -webkit-overflow-scrolling: touch !important;
 }
 */
+
+#testModeBtn{
+  display:none;
+  position:fixed !important;
+  top:14px !important;
+  right:14px !important;
+  z-index:99999 !important;
+
+  height:42px !important;
+  padding:0 14px !important;
+
+  border:0 !important;
+  border-radius:999px !important;
+
+  background:rgba(255,255,255,.94) !important;
+  color:#7c3aed !important;
+
+  font-size:13px !important;
+  font-weight:1000 !important;
+
+  box-shadow:0 8px 20px rgba(0,0,0,.16) !important;
+}
+
+body.gameStarted #testModeBtn{
+  display:block !important;
+}
+
+#testModeBtn.active{
+  background:#7c3aed !important;
+  color:white !important;
+}
