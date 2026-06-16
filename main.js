@@ -8,6 +8,11 @@ const CONFIG = {
   PLAYER_MIN: 1,
   PLAYER_MAX: 5,
 
+　CPU: {
+  TREAT_RATE: 0.85,
+  TRIAL_JOIN_RATE: 0.7,
+},
+
   START_MONEY: 50000,
   GOV_FUND_START: 100000,
 
@@ -19,9 +24,9 @@ const CONFIG = {
 
  FIXED_INFECT_COUNT: 14,
 RANDOM_INFECT_COUNT: 46,
-WORK_COUNT: 40,
+WORK_COUNT: 25,
 ITEM_COUNT: 18,
-EVENT_COUNT: 20,
+EVENT_COUNT: 35,
 
 STOP_TILES: new Set([
   35,
@@ -106,8 +111,8 @@ INVEST_CP_BONUS: {
 
   EBOLA: {
     ENABLE: true,
-    GOVFUND_LT: 80000,
-    HIGH_SEV_STREAK_NEED: 3,
+    GOVFUND_LT: 60000,
+    HIGH_SEV_STREAK_NEED: 4,
     INFECT_DANGER_PLUS: 1,
   },
 
@@ -145,11 +150,20 @@ INVEST_CP_BONUS: {
 
 MEDICAL_COLLAPSE: {
   ENABLE: true,
-  TRIGGER_UNTREATED_TOTAL_AT_LEAST: 3,
+
+  TRIGGER_GOVFUND_LT: 70000,
+  TRIGGER_TREATMENT_RATIO: 0.6,
+  TRIGGER_MIN_TREATMENTS: 2,
+
+  COOLDOWN_ROUNDS: 5,
+
   DURATION_MIN: 2,
-  DURATION_MAX: 4,
+  DURATION_MAX: 3,
+
   EXTRA_TREAT_PLAYER_PAY: 5000,
-  LOG_TEXT: "【医療崩壊】全生存者の未治療合計が3以上。治療費+5,000。持続2〜4ターン。",
+
+  LOG_TEXT:
+    "【医療崩壊】治療需要の集中と政府資金不足により医療体制が逼迫。",
 },
 
 TRIAGE: {
@@ -269,6 +283,19 @@ function getAreaByPos(pos) {
     desc: "公害・衛生環境悪化"
   };
 }
+
+/* テスト*/
+
+const TEST_MODE = {
+  ENABLE: false,
+  CPU_DELAY: 0,
+  AUTO_CLOSE_MS: 100,
+};
+
+function testDelay(ms) {
+  return TEST_MODE.ENABLE ? TEST_MODE.CPU_DELAY : ms;
+}
+
 /* =========================
      DOM
   ========================= */
@@ -441,6 +468,13 @@ function shouldAutoClosePopup(title, tone = "") {
     "財政破綻",
     "可決",
     "国民投票",
+    "145",
+    "146",
+    "147",
+    "Zeta",
+    "ZETA",
+    "治験",
+    "情報錯綜",
     "148",
     "社会評価",
     "パンデミック",
@@ -499,10 +533,52 @@ function showOkPopup(title, lines = [], tone = "info", color = "") {
     ]);
 
     if (shouldAutoClosePopup(title, tone)) {
-      setTimeout(finish, 1500);
+      setTimeout(
+  finish,
+  TEST_MODE.ENABLE ? TEST_MODE.AUTO_CLOSE_MS : 1500
+);
     }
   });
 }
+
+/* =========================
+
+   Event header helpers
+
+========================= */
+
+function playerEventHeader(p) {
+
+  if (!p) return [];
+
+  return [
+
+    `👤 対象：${p.name}`,
+
+    `💰 所持金：${(p.money ?? 0).toLocaleString()} HMN`,
+
+    `🧠 CP：${p.cp ?? 0}`,
+
+    `🦠 未治療：${p.untreated ?? 0}`,
+
+  ];
+
+}
+
+function societyEventHeader() {
+
+  return [
+
+    `🏛 GovFund：${govFund.toLocaleString()} HMN`,
+
+    `🌍 World Lv：${currentWorldLv ? currentWorldLv() : 1}`,
+
+    `👥 対象：全住民`,
+
+  ];
+
+}
+
 /* =========================
    3D Dice
 ========================= */
@@ -761,28 +837,63 @@ function recordDiseaseEncounter(disease, reason = "発症") {
   }
 
   for (const pos of eventTiles) {
-    const negative = rand01() < 0.25;
+  const r = rand01();
 
+  // 45%：収入
+  if (r < 0.45) {
     let v;
 
-    if (negative) {
-      v = -(4000 + randInt(0, 3) * 2000);
+    if (pos <= 40) {
+      v = 15000 + randInt(0, 3) * 5000;
+    } else if (pos <= 80) {
+      v = 12000 + randInt(0, 4) * 4000;
     } else {
-      if (pos <= 40) {
-        v = 15000 + randInt(0, 3) * 5000;
-      } else if (pos <= 80) {
-        v = 12000 + randInt(0, 4) * 4000;
-      } else {
-        v = 15000 + randInt(0, 4) * 5000;
-      }
+      v = 15000 + randInt(0, 4) * 5000;
     }
 
     board[pos] = {
       type: "event",
+      eventKind: "money",
       delta: v,
-      text: v >= 0 ? `臨時収入 +${v}` : `出費 ${v}`,
+      text: `臨時収入 +${v}`,
     };
+
+    continue;
   }
+
+  // 25%：出費
+  if (r < 0.70) {
+    const v = -(2000 + randInt(0,2) * 2000);
+
+    board[pos] = {
+      type: "event",
+      eventKind: "money",
+      delta: v,
+      text: `出費 ${v}`,
+    };
+
+    continue;
+  }
+
+  // 30%：社会イベント
+  const socialEvents = [
+    { key: "snsMisinfo", text: "SNSデマ拡散" },
+    { key: "publicHealthSupport", text: "保健所介入" },
+    { key: "internationalAid", text: "国際支援" },
+    { key: "medicalSupplyShortage", text: "医療物資不足" },
+    { key: "stigma", text: "風評被害" },
+    { key: "communityEducation", text: "地域啓発活動" },
+  ];
+
+  const ev = pick(socialEvents);
+
+  board[pos] = {
+    type: "event",
+    eventKind: "social",
+    eventKey: ev.key,
+    text: ev.text,
+  };
+}
 
   // 念のため固定イベントを再上書き
   for (const g of GOV_TILES) {
@@ -1000,6 +1111,11 @@ let event115ChoicesDone = new Set();
 let medicalCollapseActive = false;
 let medicalCollapseRemainTurns = 0;
 let medicalCollapseOccurred = false;
+let medicalCollapseCooldown = 0;
+
+let treatmentsThisRound = 0;
+
+let triagePriorityPlayerId = null;
 
 let referendumCooldown = 0;
 let referendumOccurred = false;
@@ -1011,6 +1127,8 @@ let publicHealthPickCount = 0;
 let publicHealthFundTotal = 0;
 let tbForcedIsolationActive = false;
 let encounteredDiseases = new Set();
+
+let testModeOriginalCPUFlags = null;
 
 function maxCpuAllowed() {
   return Math.max(0, CONFIG.PLAYER_MAX - selectedHumans);
@@ -1597,17 +1715,44 @@ function applyV71Severity(sev) {
      Medical collapse + triage
   ========================= */
   function untreatedTotalAlive() {
-    return players.filter((p) => p.alive).reduce((s, p) => s + (p.untreated || 0), 0);
-  }
+  return players
+    .filter((p) => p.alive)
+    .reduce((s, p) => s + (p.untreated || 0), 0);
+}
+
+function medicalCollapseTreatmentThreshold() {
+  const aliveCount =
+    players.filter((p) => p.alive).length;
+
+  return Math.max(
+    CONFIG.MEDICAL_COLLAPSE.TRIGGER_MIN_TREATMENTS,
+    Math.ceil(
+      aliveCount *
+      CONFIG.MEDICAL_COLLAPSE.TRIGGER_TREATMENT_RATIO
+    )
+  );
+}
 
   async function maybeTriggerMedicalCollapseAtRoundEnd() {
   if (!CONFIG.MEDICAL_COLLAPSE.ENABLE) return false;
   if (!gameStarted) return false;
   if (medicalCollapseActive) return false;
 
-  const total = untreatedTotalAlive();
+if (medicalCollapseCooldown > 0) {
+  return false;
+}
 
-  if (total < CONFIG.MEDICAL_COLLAPSE.TRIGGER_UNTREATED_TOTAL_AT_LEAST) {
+  const threshold = medicalCollapseTreatmentThreshold();
+
+  if (treatmentsThisRound < threshold) {
+    return false;
+  }
+
+  if (govFund >= CONFIG.MEDICAL_COLLAPSE.TRIGGER_GOVFUND_LT) {
+    logLine(
+      "MED",
+      `医療崩壊回避：治療集中=${treatmentsThisRound}/${threshold} だが GovFund=${govFund.toLocaleString()}`
+    );
     return false;
   }
 
@@ -1620,14 +1765,16 @@ function applyV71Severity(sev) {
 
   logLine(
     "MED",
-    `医療崩壊 発動：未治療合計=${total} / 持続${medicalCollapseRemainTurns}ターン`
+    `医療崩壊 発動：治療集中=${treatmentsThisRound}/${threshold} / GovFund=${govFund.toLocaleString()} / 持続${medicalCollapseRemainTurns}ターン`
   );
 
   await showOkPopup(
     "🏥 医療崩壊 発動",
     [
       CONFIG.MEDICAL_COLLAPSE.LOG_TEXT,
-      `未治療合計：${total}`,
+      `このラウンドの治療回数：${treatmentsThisRound}`,
+      `発動目安：${threshold}`,
+      `GovFund：${govFund.toLocaleString()} HMN`,
       `治療費：自己負担 +${CONFIG.MEDICAL_COLLAPSE.EXTRA_TREAT_PLAYER_PAY.toLocaleString()} HMN`,
       `持続：${medicalCollapseRemainTurns}ターン`,
     ],
@@ -1652,7 +1799,10 @@ async function tickMedicalCollapseAtRoundEnd() {
   }
 
   medicalCollapseActive = false;
-  medicalCollapseRemainTurns = 0;
+medicalCollapseRemainTurns = 0;
+
+medicalCollapseCooldown =
+  CONFIG.MEDICAL_COLLAPSE.COOLDOWN_ROUNDS;
 
   logLine("MED", "医療崩壊 解除：持続ターン終了");
 
@@ -1670,13 +1820,14 @@ async function tickMedicalCollapseAtRoundEnd() {
 async function maybeTriageAtRoundEnd() {
   if (!CONFIG.TRIAGE.ENABLE) return;
   if (!medicalCollapseActive) return;
+  if (triagePriorityPlayerId !== null) return;
 
   const candidates = players.filter(
-    (p) => p.alive && (p.untreated || 0) > 0
+    (p) => p.alive && !p.finished
   );
 
   if (!candidates.length) {
-    logLine("TRIAGE", "医療崩壊中だが未治療者なし");
+    logLine("TRIAGE", "医療崩壊中だが優先治療候補なし");
     return;
   }
 
@@ -1689,9 +1840,8 @@ async function maybeTriageAtRoundEnd() {
     "医療トリアージ発生",
     [
       CONFIG.TRIAGE.LOG_TEXT,
-      "対象：未治療が1以上ある生存者",
-      "選ばれた1名：未治療 -1",
-      `選ばれなかった未治療者：CP ${CONFIG.TRIAGE.CP_PENALTY_NOT_CHOSEN}`,
+      "対象：生存している全プレイヤー",
+      "選ばれた1名：次回の治療自己負担が0",
     ],
     "event",
     "yellow"
@@ -1700,52 +1850,52 @@ async function maybeTriageAtRoundEnd() {
   const votes = new Map();
 
   for (const voter of players.filter((p) => p.alive)) {
-  if (voter.isCPU) {
-    const target = cpuPickTriageTarget(candidates);
+    if (voter.isCPU) {
+      const target = cpuPickTriageTarget(candidates);
 
-    if (target) {
-      votes.set(target.id, (votes.get(target.id) || 0) + 1);
+      if (target) {
+        votes.set(target.id, (votes.get(target.id) || 0) + 1);
 
-      logLine(
-        "CPU",
-        `${voter.name}: トリアージ自動投票 → ${target.name}（未治療=${target.untreated}）`
-      );
+        logLine(
+          "CPU",
+          `${voter.name}: トリアージ自動投票 → ${target.name}`
+        );
+      }
+
+      continue;
     }
 
-    continue;
-  }
+    await new Promise((resolve) => {
+      const opts = candidates
+        .map((t) => `<option value="${t.id}">${t.name}</option>`)
+        .join("");
 
-  await new Promise((resolve) => {
-    const opts = candidates
-      .map((t) => `<option value="${t.id}">${t.name}（未治療=${t.untreated}）</option>`)
-      .join("");
+      showModal(
+        `🗳️ トリアージ投票：${voter.name}`,
+        `<div class="popMsg">
+          <div class="popTitle">優先治療枠を受ける1名を選ぶ</div>
+          <div class="popLine">最多票のプレイヤーは、次回治療の自己負担が0になります</div>
+          <select id="triagePick_${voter.id}">${opts}</select>
+        </div>`,
+        [
+          {
+            text: "投票する",
+            className: "btnPrimary",
+            onClick: () => {
+              const id = Number(
+                document.getElementById(`triagePick_${voter.id}`)?.value
+              );
 
-    showModal(
-      `🗳️ トリアージ投票：${voter.name}`,
-      `<div class="popMsg">
-        <div class="popTitle">無料治療を受ける1名を選ぶ</div>
-        <div class="popLine">最多票のプレイヤーが未治療 -1</div>
-        <select id="triagePick_${voter.id}">${opts}</select>
-      </div>`,
-      [
-        {
-          text: "投票する",
-          className: "btnPrimary",
-          onClick: () => {
-            const id = Number(
-              document.getElementById(`triagePick_${voter.id}`)?.value
-            );
+              closeModal();
 
-            closeModal();
-
-            votes.set(id, (votes.get(id) || 0) + 1);
-            resolve();
+              votes.set(id, (votes.get(id) || 0) + 1);
+              resolve();
+            },
           },
-        },
-      ]
-    );
-  });
-}
+        ]
+      );
+    });
+  }
 
   let bestIds = [];
   let best = -1;
@@ -1759,34 +1909,25 @@ async function maybeTriageAtRoundEnd() {
     }
   }
 
+  if (!bestIds.length) return;
+
   const chosenId = bestIds.length === 1 ? bestIds[0] : pick(bestIds);
-  const chosen = players[chosenId];
+  const chosen = players.find((p) => p.id === chosenId);
 
-  if (!chosen || !chosen.alive || chosen.untreated <= 0) return;
+  if (!chosen || !chosen.alive) return;
 
-  chosen.untreated = Math.max(0, chosen.untreated - 1);
-
-  for (const p of candidates) {
-    if (p.id === chosen.id) continue;
-
-    addCP(
-      p,
-      CONFIG.TRIAGE.CP_PENALTY_NOT_CHOSEN,
-      "（トリアージ落選）"
-    );
-  }
+  triagePriorityPlayerId = chosen.id;
 
   logLine(
     "TRIAGE",
-    `対象=${chosen.name}（票=${best}）→ 未治療-1 / 落選者CP${CONFIG.TRIAGE.CP_PENALTY_NOT_CHOSEN}`
+    `${chosen.name}: 優先治療枠を獲得（票=${best}）`
   );
 
   await showOkPopup(
     "トリアージ結果",
     [
-      `治療対象：${chosen.name}`,
-      `${chosen.name}: 未治療 -1`,
-      `選ばれなかった未治療者：CP ${CONFIG.TRIAGE.CP_PENALTY_NOT_CHOSEN}`,
+      `優先治療枠：${chosen.name}`,
+      "次回の治療時、自己負担が0になります。",
     ],
     "event",
     "yellow"
@@ -2939,11 +3080,19 @@ async function doTreatment(p) {
     ? CONFIG.MEDICAL_COLLAPSE.EXTRA_TREAT_PLAYER_PAY
     : 0;
 
-  const playerPay = playerPayBase + extra;
+  let playerPay = playerPayBase + extra;
+
+if (p.id === triagePriorityPlayerId) {
+  playerPay = 0;
+  triagePriorityPlayerId = null;
+  logLine("TRIAGE", `${p.name}: トリアージ優先枠により自己負担0`);
+}
   const govPay = medicalPrivatized ? 0 : govPayBase;
 
   forcePay(p, playerPay, "治療費");
   govFund -= govPay;
+
+treatmentsThisRound += 1;
 
   const cpDelta = CONFIG.TREAT_CP[p.insurance] ?? 0;
   if (cpDelta !== 0) addCP(p, cpDelta, "（治療）");
@@ -2960,6 +3109,8 @@ async function doForcedTbTreatment(p) {
   const cost = 10000;
 
   govFund -= cost;
+
+treatmentsThisRound += 1;
 
   logLine(
     "TB",
@@ -3164,8 +3315,6 @@ for (const target of targets) {
   if (tbForcedIsolationActive) {
     await doForcedTbTreatment(target);
 
-    grantGreenPassBase(target, "結核", "公費強制収容");
-
     logLine(
       "TB",
       `${target.name}: 公費強制収容フラグにより治療拒否不可`
@@ -3176,16 +3325,36 @@ for (const target of targets) {
   }
 
   if (target.isCPU) {
+  const willTreat = rand01() < CONFIG.CPU.TREAT_RATE;
+
+  if (willTreat) {
     await doTreatment(target);
 
     logLine(
       "CPU",
       `${target.name}: 結核クラスターを自動治療`
     );
+  } else {
+    target.untreated += sev;
+    target.untreatedCount = (target.untreatedCount || 0) + 1;
 
-    renderTable();
-    continue;
+    addCP(
+      target,
+      CONFIG.REFUSE_TREAT_CP,
+      "（CPU結核クラスター治療拒否）"
+    );
+
+    tbForcedIsolationActive = true;
+
+    logLine(
+      "CPU",
+      `${target.name}: 結核クラスター治療拒否 → 公費強制収容フラグON`
+    );
   }
+
+  renderTable();
+  continue;
+}
 
   // ここから下は今ある人間用モーダル
   await new Promise((resolve) => {
@@ -3223,7 +3392,6 @@ for (const target of targets) {
       closeModal();
 
       await doTreatment(target);
-      grantGreenPassBase(target, "結核", "結核クラスター治療");
 
       logLine("TB", `${target.name}: 結核クラスターを治療`);
 
@@ -3291,13 +3459,46 @@ for (const target of targets) {
 } 
 
 async function cpuResolveTreatmentDecision(p, disease, sev) {
-  await doTreatment(p);
+  const currentUntreated = p.untreated || 0;
 
-  grantGreenPassBase(p, disease, "完治");
+  const mustTreat =
+    currentUntreated > 0 ||
+    sev >= 2 ||
+    currentUntreated + sev >= CONFIG.UNTREATED_DEATH_THRESHOLD;
+
+  const willTreat =
+    mustTreat || rand01() < CONFIG.CPU.TREAT_RATE;
+
+  if (willTreat) {
+    await doTreatment(p);
+
+    grantGreenPassBase(p, disease, "完治");
+
+    logLine(
+      "CPU",
+      `${p.name}: ${disease} を自動治療（${
+        mustTreat
+          ? "必須治療"
+          : `治療率${Math.round(CONFIG.CPU.TREAT_RATE * 100)}%`
+      } / 危険度${sev}）`
+    );
+
+    renderTable();
+    return;
+  }
+
+  p.untreated += sev;
+  p.untreatedCount = (p.untreatedCount || 0) + 1;
+
+  addCP(
+    p,
+    CONFIG.REFUSE_TREAT_CP,
+    "（CPU治療拒否）"
+  );
 
   logLine(
     "CPU",
-    `${p.name}: ${disease} を自動治療（危険度${sev}）`
+    `${p.name}: ${disease} の治療を拒否 / 未治療 +${sev}`
   );
 
   renderTable();
@@ -3426,8 +3627,8 @@ await showOkPopup(
 );
 
 if (disease === "結核") {
-  await resolveTbCluster(p, sev);
-  return;
+  const clustered = await resolveTbCluster(p, sev);
+  if (clustered) return;
 }
 
 if (disease === "狂犬病") {
@@ -4618,7 +4819,26 @@ async function resolveTrial146(p) {
   logLine("146", `${p.name}: 治験 - 同調圧力`);
 
 if (p.isCPU) {
-  p.trialJoined = true;
+  const willJoinTrial = rand01() < CONFIG.CPU.TRIAL_JOIN_RATE;
+
+if (!willJoinTrial) {
+  p.trialJoined = false;
+  p.trialSuccess = false;
+
+  addCP(
+    p,
+    CONFIG.TRIAL.REFUSE_CP,
+    "（146：CPU治験拒否）"
+  );
+
+  logLine(
+    "CPU",
+    `${p.name}: 146治験を自動拒否 / CP ${CONFIG.TRIAL.REFUSE_CP}`
+  );
+
+  renderTable();
+  return;
+}
 
   const roll = randInt(1, 100);
   const success = roll <= CONFIG.TRIAL.SUCCESS_RATE;
@@ -5817,6 +6037,11 @@ await resolveTile(p);
         publicHealthBuffTurns -= 1;
         logLine("115", `公衆衛生強化 残り${publicHealthBuffTurns}ターン`);
       }
+
+	if (medicalCollapseCooldown > 0 && !medicalCollapseActive) {
+  medicalCollapseCooldown -= 1;
+}
+      treatmentsThisRound = 0;
     }
 
     renderTurn();
@@ -6225,6 +6450,11 @@ function hardReset() {
   medicalCollapseActive = false;
 medicalCollapseRemainTurns = 0;
 medicalCollapseOccurred = false;
+medicalCollapseCooldown = 0;
+
+treatmentsThisRound = 0;
+
+triagePriorityPlayerId = null;
 
 referendumCooldown = 0;
 referendumOccurred = false;
@@ -6296,7 +6526,13 @@ if (el.startOverlay) {
   el.startOverlay.style.display = "none";
 }
 
-await askPlayerNames();
+if (!TEST_MODE.ENABLE) {
+  await askPlayerNames();
+}
+
+if (TEST_MODE.ENABLE) {
+  applyTestModePlayers();
+}
 
 gameStarted = true;
 
@@ -7663,6 +7899,12 @@ try {
 async function resolveEvent(p, tile) {
   if (!p || !tile) return;
 
+  if (tile.eventKind === "social") {
+    await resolveSocialEvent(p, tile);
+    renderTable();
+    return;
+  }
+
   const delta = Number(tile.delta || 0);
 
   if (delta === 0) {
@@ -7696,6 +7938,136 @@ async function resolveEvent(p, tile) {
   );
 
   renderTable();
+}
+
+async function resolveSocialEvent(p, tile) {
+  const key = tile.eventKey;
+
+  if (key === "snsMisinfo") {
+    addCP(p, -1, "（SNSデマ拡散）");
+
+    logLine("EVENT", `${p.name}: SNSデマ拡散 / CP-1`);
+
+    await showOkPopup(
+      "📱 SNSデマ拡散",
+      [
+        "感染症に関する誤情報が広がった。",
+        `${p.name} の社会的判断力が揺らぐ。`,
+        "CP -1",
+      ],
+      "event",
+      "yellow"
+    );
+
+    return;
+  }
+
+  if (key === "publicHealthSupport") {
+    publicHealthBuffTurns = Math.max(publicHealthBuffTurns || 0, RULE_V71.PH_BUFF_TURNS);
+    publicHealthPickCount += 1;
+
+    logLine("EVENT", `${p.name}: 保健所介入 / 公衆衛生バフ${RULE_V71.PH_BUFF_TURNS}ターン`);
+
+    await showOkPopup(
+      "🏥 保健所介入",
+      [
+        "地域の保健所が介入した。",
+        `感染危険度を下げる公衆衛生バフが ${RULE_V71.PH_BUFF_TURNS} ターン有効。`,
+      ],
+      "event",
+      "blue"
+    );
+
+    return;
+  }
+
+  if (key === "internationalAid") {
+    const amount = 20000;
+
+    govFund += amount;
+    addGovContribution(p, amount);
+    addCP(p, 1, "（国際支援の調整）");
+
+    logLine("EVENT", `${p.name}: 国際支援 / GovFund +${amount.toLocaleString()} / CP+1`);
+
+    await showOkPopup(
+      "🌍 国際支援",
+      [
+        "国際機関から支援が入った。",
+        `GovFund：+${amount.toLocaleString()} HMN`,
+        `${p.name}: CP +1`,
+      ],
+      "event",
+      "blue"
+    );
+
+    return;
+  }
+
+  if (key === "medicalSupplyShortage") {
+    const loss = 5000;
+
+    forcePay(p, loss, "医療物資不足");
+
+    logLine("EVENT", `${p.name}: 医療物資不足 / ${loss.toLocaleString()} HMN負担`);
+
+    await showOkPopup(
+      "🧤 医療物資不足",
+      [
+        "マスク・消毒薬などの医療物資が不足した。",
+        `${p.name}: -${loss.toLocaleString()} HMN`,
+      ],
+      "event",
+      "yellow"
+    );
+
+    return;
+  }
+
+  if (key === "stigma") {
+    addCP(p, -1, "（風評被害）");
+
+    logLine("EVENT", `${p.name}: 風評被害 / CP-1`);
+
+    await showOkPopup(
+      "🗣️ 風評被害",
+      [
+        "感染症への偏見や差別が広がった。",
+        `${p.name}: CP -1`,
+      ],
+      "event",
+      "yellow"
+    );
+
+    return;
+  }
+
+  if (key === "communityEducation") {
+    addCP(p, 1, "（地域啓発活動）");
+
+    logLine("EVENT", `${p.name}: 地域啓発活動 / CP+1`);
+
+    await showOkPopup(
+      "📢 地域啓発活動",
+      [
+        "地域で感染症予防の啓発活動が行われた。",
+        `${p.name}: CP +1`,
+      ],
+      "event",
+      "blue"
+    );
+
+    return;
+  }
+
+  logLine("EVENT", `${p.name}: 未定義の社会イベント ${key}`);
+
+  await showOkPopup(
+    "⭐ 社会イベント",
+    [`${p.name} に社会イベントが発生した。`, "今回は大きな変化なし。"],
+    "event",
+    "yellow"
+  );
 }
 
 function ensureAreaCard() {
@@ -7760,3 +8132,41 @@ window.addEventListener("click", function(e) {
   }
 });
 
+
+
+document.getElementById("testModeBtn")?.addEventListener("click", () => {
+  TEST_MODE.ENABLE = !TEST_MODE.ENABLE;
+
+  const btn = document.getElementById("testModeBtn");
+  if (btn) {
+    btn.textContent = TEST_MODE.ENABLE ? "🧪 TEST ON" : "🧪 TEST OFF";
+    btn.classList.toggle("active", TEST_MODE.ENABLE);
+  }
+
+  if (TEST_MODE.ENABLE) {
+    testModeOriginalCPUFlags = players.map((p) => p.isCPU);
+    applyTestModePlayers();
+  } else {
+    if (testModeOriginalCPUFlags) {
+      for (let i = 0; i < players.length; i++) {
+        players[i].isCPU = testModeOriginalCPUFlags[i];
+      }
+    }
+    testModeOriginalCPUFlags = null;
+    logLine("TEST", "テストモードOFF：CPU化を元に戻しました");
+  }
+
+  renderTable();
+  renderTurn();
+});
+
+function applyTestModePlayers() {
+  if (!TEST_MODE.ENABLE) return;
+
+  for (let i = 0; i < players.length; i++) {
+    players[i].isCPU = true;
+    players[i].name = players[i].name || `CPU${i + 1}`;
+  }
+
+  logLine("TEST", "全プレイヤーをCPU化しました");
+}
