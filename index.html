@@ -1,330 +1,385 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>仮想国家ハマノランド - Ultimate v7.1</title>
-  <link rel="stylesheet" href="./style.css" />
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>仮想国家ハマノランド - Ultimate v7.1</title>
+ <link rel="stylesheet" href="./style.css" />
 </head>
-
 <body>
 <button
-  id="ruleBookBtn"
-  class="ruleBookBtn"
-  type="button"
-  style="display:none;"
+ id="ruleBookBtn"
+ class="ruleBookBtn"
+ type="button"
+ style="display:none;"
 >
-📖 ルール
+📖
+ルール
 </button>
-<button id="testModeBtn" type="button">🧪 TEST OFF</button>
-
-  <div id="startOverlay">
-    <div class="start-card">
-  <div class="tutorialStep active" id="tutorialStep1">
-    <h1 class="gameTitle">🦠 Infectious LiFE</h1>
-    <div class="gameSub">Hamanoland Edition</div>
-
-    <div class="welcomeBox">ようこそハマノランドへ！</div>
-
-    <p>
-      ここは感染症、医療制度、政府資金、公衆衛生が複雑に絡み合う仮想国家。
-    </p>
-    <p>
-      あなたは150マスの社会を進みながら、命と経済のバランスを考えて生き残ります。
-    </p>
-  </div>
-
-  <div class="tutorialStep" id="tutorialStep2">
-    <h2>🎲 基本ルール</h2>
-
-    <div class="ruleCard">🎲 サイコロを振ってマスを進む</div>
-    <div class="ruleCard">🦠 感染マスでは病気にかかることがある</div>
-    <div class="ruleCard">🎁 アイテム・保険・ワクチンでリスクを下げる</div>
-    <div class="ruleCard">🏛 政府資金が減りすぎると社会が不安定になる</div>
-  </div>
-
-  <div class="tutorialStep" id="tutorialStep3">
-    <h2>🎯 目的</h2>
-
-    <div class="ruleCard">✅ 終盤まで生き残る</div>
-    <div class="ruleCard">🧠 未治療を増やしすぎない</div>
-    <div class="ruleCard">🌍 公衆衛生レベルを保つ</div>
-    <div class="ruleCard">🟩 Green Passを獲得して最終防衛戦に備える</div>
-
-    <div class="ruleMini">
-      🦠 感染　🎁 アイテム　💼 仕事　🏛 政府　⭐ イベント
-    </div>
-  </div>
-
-  <div class="tutorialStep" id="tutorialStep4">
-    <h2>入国設定</h2>
-
-    <div class="small">人間プレイヤー人数</div>
-    <div id="playerBtns" class="playerBtns">
-      <button onclick="selectP(1)">1</button>
-      <button onclick="selectP(2)">2</button>
-      <button onclick="selectP(3)">3</button>
-      <button onclick="selectP(4)">4</button>
-      <button onclick="selectP(5)">5</button>
-    </div>
-
-    <div class="small">CPU人数</div>
-    <div id="cpuBtns" class="playerBtns">
-      <button onclick="selectCPU(0)">0</button>
-      <button onclick="selectCPU(1)">1</button>
-      <button onclick="selectCPU(2)">2</button>
-      <button onclick="selectCPU(3)">3</button>
-      <button onclick="selectCPU(4)">4</button>
-    </div>
-
-    <div id="totalText" class="totalText">Total: 4 / 5</div>
-
-  <button id="btnStart" class="btnPrimary">入国する</button>
-  </div>
-
-  <div class="tutorialNav">
-    <button id="tutorialBackBtn" type="button" onclick="tutorialPrev()">戻る</button>
+<button id="testModeBtn" type="button">
+🧪
+ TEST OFF</button>
+ <div id="startOverlay">
+ <div class="start-card">
+ <div class="tutorialStep active" id="tutorialStep1">
+ <h1 class="gameTitle">
+🦠
+ Infectious LiFE</h1>
+ <div class="gameSub">Hamanoland Edition</div>
+ <div class="welcomeBox">ようこそハマノランドへ！</div>
+ <p>
+ ここは感染症､ 医療制度､ 政府資金､ 公衆衛生が複雑に絡み合う仮想国家｡
+ </p>
+ <p>
+ あなたは150マスの社会を進みながら､ 命と経済のバランスを考えて生き残ります｡
+ </p>
+ </div>
+ <div class="tutorialStep" id="tutorialStep2">
+ <h2>
+🎲
+基本ルール</h2>
+ <div class="ruleCard">
+🎲
+サイコロを振ってマスを進む</div>
+ <div class="ruleCard">
+🦠
+感染マスでは病気にかかることがある</div>
+ <div class="ruleCard">
+🎁
+アイテム・保険・ワクチンでリスクを下げる</div>
+ <div class="ruleCard">
+🏛
+政府資金が減りすぎると社会が不安定になる</div>
+ </div>
+ <div class="tutorialStep" id="tutorialStep3">
+ <h2>
+🎯
+目的</h2>
+ <div class="ruleCard">
+✅
+終盤まで生き残る</div>
+ <div class="ruleCard">
+🧠
+未治療を増やしすぎない</div>
+ <div class="ruleCard">
+🌍
+公衆衛生レベルを保つ</div>
+ <div class="ruleCard">
+🟩
+ Green Passを獲得して最終防衛戦に備える</div>
+ <div class="ruleMini">
+ 
+🦠
+感染　
+🎁
+アイテム　
+💼
+仕事　
+🏛
+政府　
+⭐
+イベント
+ </div>
+ </div>
+ <div class="tutorialStep" id="tutorialStep4">
+ <h2>入国設定</h2>
+ <div class="small">人間プレイヤー人数</div>
+ <div id="playerBtns" class="playerBtns">
+ <button onclick="selectP(1)">1</button>
+ <button onclick="selectP(2)">2</button>
+ <button onclick="selectP(3)">3</button>
+ <button onclick="selectP(4)">4</button>
+ <button onclick="selectP(5)">5</button>
+ </div>
+ <div class="small">CPU人数</div>
+ <div id="cpuBtns" class="playerBtns">
+ <button onclick="selectCPU(0)">0</button>
+ <button onclick="selectCPU(1)">1</button>
+ <button onclick="selectCPU(2)">2</button>
+ <button onclick="selectCPU(3)">3</button>
+ <button onclick="selectCPU(4)">4</button>
+ </div>
+ <div id="totalText" class="totalText">Total: 4 / 5</div>
+ <button id="btnStart" class="btnPrimary">入国する</button>
+ </div>
+ <div class="tutorialNav">
+ <button id="tutorialBackBtn" type="button" onclick="tutorialPrev()">戻る</button>
 <button id="tutorialNextBtn" type="button" onclick="tutorialNext()">次へ</button>
-  </div>
+ </div>
 </div>
 </div> 
-
-  <div class="header">
-    <div class="controls">
-      <div class="dice-ui">
-        <div class="scene">
-          <div class="dice-wrapper" id="diceWrapper">
-            <div class="dice3d" id="dice3d">
-              <div class="dice__face dice__face--front"></div>
-              <div class="dice__face dice__face--back"></div>
-              <div class="dice__face dice__face--right"></div>
-              <div class="dice__face dice__face--left"></div>
-              <div class="dice__face dice__face--top"></div>
-              <div class="dice__face dice__face--bottom"></div>
-            </div>
-            <div id="diceNumber" class="diceNumber3d">1</div>
-          </div>
-        </div>
-
-        <button id="btnRoll" type="button" disabled>サイコロ 🎲</button>
-      </div>
-    </div>
-
-    <div class="pills">
-      <span class="pill" id="roundPill">Round: 1</span>
-      <span class="pill" id="govPill">GovFund: 100,000</span>
-      <span class="pill" id="lvPill">World Lv: 1</span>
-      <span class="pill alert" id="ebolaPill" style="display:none;">🦇 エボラ</span>
-      <span class="pill alert" id="collapsePill" style="display:none;">🏥 医療崩壊</span>
-      <span class="pill good" id="phPill" style="display:none;">🌐 公衆衛生UP</span>
-      <span class="pill special" id="privatizePill" style="display:none;">⚖️ 医療民営化</span>
-    </div>
-  </div>
-
-
-  <div class="main-area">
-    <div class="board-container">
-      <div id="boardBox">
-        <div id="gridLayer"></div>
-        <div id="tokensLayer"></div>
-      </div>
-    </div>
-
-    <div class="side-area">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>名</th>
-              <th>Pos</th>
-              <th>Money</th>
-              <th>Ins</th>
-              <th>CP</th>
-              <th>未治</th>
-              <th>Pass</th>
-              <th>Items</th>
-            </tr>
-          </thead>
-          <tbody id="playerTbody"></tbody>
-        </table>
-      </div>
-
-      <div id="log">ここにゲームの進行が表示されます。</div>
-    </div>
-  </div>
-
-  <div id="modalBack">
-    <div class="modal">
-      <div id="modalTitle"></div>
-      <div id="modalBody"></div>
-      <div id="modalFoot"></div>
-    </div>
-  </div>
-
-  <div id="resultOverlay">
-    <div class="result-card">
-      <div id="resultTitle">パンデミック 最終評価</div>
-      <div id="resultBody">
-        <h3>👥 生存者リザルト</h3>
-        <table class="result-table">
-          <thead>
-            <tr>
-              <th>名</th>
-              <th>CP</th>
-              <th>投資</th>
-              <th>未治</th>
-              <th>TG</th>
-              <th>結果</th>
-            </tr>
-          </thead>
-          <tbody id="resultTbody"></tbody>
-        </table>
-
-        <h3>🦠 ハマノランド感染症図鑑</h3>
-        <div id="diseaseList"></div>
-      </div>
-
-      <div id="resultFoot">
-        <button class="btnPrimary" type="button" onclick="location.reload()">もう一度プレイ</button>
-      </div>
-    </div>
-  </div>
-
-<button id="logToggleBtn" type="button">📜 ログ</button>
-<button id="cardToggleBtn" type="button">🪪 診察券</button>
+ <div class="header">
+ <div class="controls">
+ <div class="dice-ui">
+ <div class="scene">
+ <div class="dice-wrapper" id="diceWrapper">
+ <div class="dice3d" id="dice3d">
+ <div class="dice__face dice__face--front"></div>
+ <div class="dice__face dice__face--back"></div>
+ <div class="dice__face dice__face--right"></div>
+ <div class="dice__face dice__face--left"></div>
+ <div class="dice__face dice__face--top"></div>
+ <div class="dice__face dice__face--bottom"></div>
+ </div>
+ <div id="diceNumber" class="diceNumber3d">1</div>
+ </div>
+ </div>
+ <button id="btnRoll" type="button" disabled>サイコロ
+🎲
+</button>
+ </div>
+ </div>
+ <div class="pills">
+ <span class="pill" id="roundPill">Round: 1</span>
+ <span class="pill" id="govPill">GovFund: 100,000</span>
+ <span class="pill" id="lvPill">World Lv: 1</span>
+ <span class="pill alert" id="ebolaPill" style="display:none;">
+🦇
+エボラ</span>
+ <span class="pill alert" id="collapsePill" style="display:none;">
+🏥
+医療崩壊</span>
+ <span class="pill good" id="phPill" style="display:none;">
+🌐
+公衆衛生UP</span>
+ <span class="pill special" id="privatizePill" style="display:none;">
+⚖
+医療民営化</span>
+ </div>
+ </div>
+ <div class="main-area">
+ <div class="board-container">
+ <div id="boardBox">
+ <div id="gridLayer"></div>
+ <div id="tokensLayer"></div>
+ </div>
+ </div>
+ <div class="side-area">
+ <div class="table-wrap">
+ <table>
+ <thead>
+ <tr>
+ <th>名</th>
+ <th>Pos</th>
+ <th>Money</th>
+ <th>Ins</th>
+ <th>CP</th>
+ <th>未治</th>
+ <th>Pass</th>
+ <th>Items</th>
+ </tr>
+ </thead>
+ <tbody id="playerTbody"></tbody>
+ </table>
+ </div>
+ <div id="log">ここにゲームの進行が表示されます｡ </div>
+ </div>
+ </div>
+ <div id="modalBack">
+ <div class="modal">
+ <div id="modalTitle"></div>
+ <div id="modalBody"></div>
+ <div id="modalFoot"></div>
+ </div>
+ </div>
+ <div id="resultOverlay">
+ <div class="result-card">
+ <div id="resultTitle">パンデミック 最終評価</div>
+ <div id="resultBody">
+ <h3>
+👥
+生存者リザルト</h3>
+ <table class="result-table">
+ <thead>
+ <tr>
+ <th>名</th>
+ <th>CP</th>
+ <th>投資</th>
+ <th>未治</th>
+ <th>TG</th>
+ <th>結果</th>
+ </tr>
+ </thead>
+ <tbody id="resultTbody"></tbody>
+ </table>
+ <h3>
+🦠
+ハマノランド感染症図鑑</h3>
+ <div id="diseaseList"></div>
+ </div>
+ <div id="resultFoot">
+ <button class="btnPrimary" type="button" onclick="location.reload()">もう一度プレイ</button>
+ </div>
+ </div>
+ </div>
+<button id="logToggleBtn" type="button">
+📜
+ログ</button>
+<button id="cardToggleBtn" type="button">
+🪪
+診察券</button>
 <button id="cardCloseBtn" type="button">閉じる</button>
 <button id="logCloseBtn" type="button">閉じる</button>
 <div id="ruleBookModal" class="ruleBookModal hidden">
-  <div class="ruleBookCard">
-    <button id="ruleBookCloseBtn" class="ruleBookCloseBtn">×</button>
-
-    <h2>📖 Infectious LiFE ガイド</h2>
-
+ <div class="ruleBookCard">
+ <button id="ruleBookCloseBtn" class="ruleBookCloseBtn">×</button>
+ <h2>
+📖
+ Infectious LiFE ガイド</h2>
 <section>
-  <h3>🎯 目的</h3>
-  <p>
-    150マスの社会を進み、感染症・医療費・政府資金・公衆衛生のバランスを取りながら終盤まで生き残る。
-  </p>
+ <h3>
+🎯
+目的</h3>
+ <p>
+ 150マスの社会を進み､ 感染症・医療費・政府資金・公衆衛生のバランスを取りながら終盤まで生き残る｡
+ </p>
 </section>
-
 <section>
-  <h3>🎲 基本</h3>
-  <ul>
-    <li>サイコロで移動</li>
-    <li>STOPマスは通過しても必ず停止</li>
-    <li>感染・仕事・政府・アイテム・イベントマスがある</li>
-    <li>最大プレイヤー数：5人</li>
-  </ul>
+ <h3>
+🎲
+基本</h3>
+ <ul>
+ <li>サイコロで移動</li>
+ <li>STOPマスは通過しても必ず停止</li>
+ <li>感染・仕事・政府・アイテム・イベントマスがある</li>
+ <li>最大プレイヤー数：5人</li>
+ </ul>
 </section>
-
 <section>
-  <h3>🦠 感染と未治療</h3>
-  <ul>
-    <li>感染すると治療費が発生</li>
-    <li>治療しないと「未治療」が増える</li>
-    <li>未治療が増えると終盤評価に悪影響</li>
-    <li>危険度2以上の感染が連続するとエボラ条件に関係</li>
-  </ul>
+ <h3>
+🦠
+感染と未治療</h3>
+ <ul>
+ <li>感染すると治療費が発生</li>
+ <li>治療しないと ｢未治療｣ が増える</li>
+ <li>未治療が増えると終盤評価に悪影響</li>
+ <li>未治療合計が3に到達すると死亡処理</li>
+ <li>危険度2以上の感染が4回連続するとエボラ条件に関係</li>
+ </ul>
 </section>
-
 <section>
-  <h3>💉 ワクチン</h3>
-  <ul>
-    <li>対象疾患の感染を100%回避</li>
-    <li>ワクチンで防いだ場合、Green Pass権利は得られない</li>
-  </ul>
+ <h3>
+💉
+ワクチン</h3>
+ <ul>
+ <li>対象疾患の感染を100%回避</li>
+ <li>ワクチンパック対象：ポリオ､ 麻しん､ 風しん､ 水痘､ 日本脳炎</li>
+ <li>ワクチンで防いだ場合､ Green Pass権利は得られない</li>
+ </ul>
 </section>
-
 <section>
-  <h3>🟩 Green Pass</h3>
-  <p>対象感染症から自然回復した場合に権利を獲得。100マス目で正式取得。</p>
-  <ul>
-    <li>対象：痘そう、黄熱、B型肝炎</li>
-    <li>流行性耳下腺炎、麻しん、風しん、水痘</li>
-    <li>正規取得費：ルール内設定額</li>
-  </ul>
+ <h3>
+🟩
+ Green Pass</h3>
+ <p>対象感染症から自然回復した場合に権利を獲得｡ 100マス目で正式取得｡ </p>
+ <ul>
+ <li>対象：痘そう､ 黄熱､ ウイルス性肝炎(B型)</li>
+ <li>流行性耳下腺炎､ 麻しん､ 風しん､ 水痘</li>
+ <li>GP権利あり：2,000 HMNで正規取得</li>
+ <li>権利なし：20,000 HMNで賄賂取得､ またはパスなし特攻</li>
+ </ul>
 </section>
-
 <section>
-  <h3>🌍 World Lv</h3>
-  <ul>
-    <li>公衆衛生レベル</li>
-    <li>投資で上昇</li>
-    <li>Lv1以上で感染危険度が下がる</li>
-    <li>高いほど社会全体が感染に強くなる</li>
-  </ul>
+ <h3>
+🌍
+ World Lv</h3>
+ <ul>
+ <li>公衆衛生レベル</li>
+ <li>GovFundが150,000以上でWorld Lv2､ 200,000以上でWorld Lv3</li>
+ <li>World Lv2以上で感染危険度-1</li>
+ <li>World Lv2以上でアイテム成功率+10%</li>
+ </ul>
 </section>
-
 <section>
-  <h3>🏛 GovFund</h3>
-  <ul>
-    <li>政府資金</li>
-    <li>医療政策・補助・イベントで増減</li>
-    <li>80,000未満でエボラ発生条件の一部</li>
-    <li>減りすぎると社会危機が起きやすい</li>
-  </ul>
+ <h3>
+🏛
+ GovFund</h3>
+ <ul>
+ <li>政府資金</li>
+ <li>医療政策・補助・イベントで増減</li>
+ <li>60,000未満でエボラ発生条件の一部</li>
+ <li>70,000未満かつ治療集中で医療崩壊条件に関係</li>
+ <li>減りすぎると社会危機が起きやすい</li>
+ </ul>
 </section>
-
 <section>
-  <h3>🏥 保険</h3>
-  <ul>
-    <li>A：無保険</li>
-    <li>B：一部負担</li>
-    <li>C：全額カバー寄り</li>
-    <li>保険が良いほど治療時の自己負担が軽くなる</li>
-  </ul>
+ <h3>
+🏥
+保険</h3>
+ <ul>
+ <li>A：無保険</li>
+ <li>B：一部負担</li>
+ <li>C：全額カバー寄り</li>
+ <li>保険が良いほど治療時の自己負担が軽くなる</li>
+ </ul>
 </section>
-
 <section>
-  <h3>🧠 CP</h3>
-  <ul>
-    <li>市民協力度</li>
-    <li>高いほど終盤評価に有利</li>
-    <li>低いと社会評価が悪化しやすい</li>
-  </ul>
+ <h3>
+🧠
+ CP</h3>
+ <ul>
+ <li>市民協力度</li>
+ <li>高いほど終盤評価に有利</li>
+ <li>低いと社会評価が悪化しやすい</li>
+ </ul>
 </section>
-
 <section>
-  <h3>⚠️ 特殊イベント</h3>
-  <ul>
-    <li>エボラ：GovFund低下、または高危険度感染の連続で発生</li>
-    <li>発生中：感染危険度 +1</li>
-    <li>医療崩壊：治療・アイテム成功率に悪影響</li>
-    <li>医療民営化：医療費負担が重くなる</li>
-  </ul>
+ <h3>
+⚠
+特殊イベント</h3>
+ <ul>
+ <li>エボラ：GovFund 60,000未満､ または危険度2以上の感染4回連続で発生</li>
+ <li>エボラ発生中：感染危険度+1</li>
+ <li>医療崩壊：GovFund 70,000未満かつ治療集中で発動｡ 治療自己負担+5,000 HMN</li>
+ <li>トリアージ：医療崩壊中､ 投票で1名の次回治療自己負担が0</li>
+ <li>医療民営化：政府による治療費負担が0になる</li>
+ </ul>
 </section>
-
 <section>
-  <h3>🗺 マスの種類</h3>
-  <ul>
-    <li>🦠 感染：感染症イベント</li>
-    <li>🎁 アイテム：予防・治療補助</li>
-    <li>💼 仕事：収入獲得</li>
-    <li>🏛 政府：政策・投資</li>
-    <li>⭐ イベント：社会変化</li>
-    <li>🛑 STOP：必ず停止</li>
-  </ul>
+ <h3>
+🗺
+マスの種類</h3>
+ <ul>
+ <li>
+🦠
+感染：感染症イベント</li>
+ <li>
+🎁
+アイテム：予防・治療補助</li>
+ <li>
+💼
+仕事：収入獲得</li>
+ <li>
+🏛
+政府：政策・投資</li>
+ <li>
+⭐
+イベント：社会変化</li>
+ <li>
+🛑
+ STOP：必ず停止</li>
+ </ul>
 </section>
-
 <section>
-  <h3>🏁 終盤評価</h3>
-  <p>
-    生存状況、未治療数、CP、Green Pass、GovFund、World Lvなどをもとに最終評価が決まる。
-  </p>
+ <h3>
+🏁
+終盤評価</h3>
+ <p>
+ 生存状況､ 未治療数､ CP､ Green Pass､ GovFund､ World Lvなどをもとに最終評価が決まる｡
+ </p>
 </section>
-
 <section>
-  <h3>🦠 遭遇した感染症</h3>
-  <p>
-    ゲーム中に遭遇した感染症だけが表示されます。
-    医学的な分類・感染経路・ワクチン情報を確認できます。
-  </p>
-
-  <div id="ruleDiseaseList"></div>
+ <h3>
+🦠
+遭遇した感染症</h3>
+ <p>
+ ゲーム中に遭遇した感染症だけが表示されます｡
+ 医学的な分類・感染経路・ワクチン情報を確認できます｡
+ </p>
+ <div id="ruleDiseaseList"></div>
 </section>
-  </div>
+ </div>
 </div>
-  <script src="./main.js"></script>
-
+ <script src="./main.js"></script>
 </body>
 </html>
